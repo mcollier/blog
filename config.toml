@@ -2,7 +2,7 @@ baseurl = "https://michaelscollier.com/"
 title = "Michael S. Collier's Blog"
 theme = "ghostwriter"
 copyright = "Michael S. Collier"
-disqusShortname = "michaelscollier"
+disqusShortname = "mcollier-blog"
 languageCode = "en-us"
 
 [Params]
