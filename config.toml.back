@@ -4,6 +4,7 @@ theme = "ghostwriter"
 copyright = "Michael S. Collier"
 disqusShortname = "mcollier-blog"
 languageCode = "en-us"
+googleAnalytics = "UA-156433646-1"
 
 [Params]
     mainSections = ["post"]
@@ -14,6 +15,11 @@ languageCode = "en-us"
     twitter = "https://twitter.com/michaelcollier"
     opengraph = true
     shareTwitter = true
+    shareFacebook = true
+    shareGooglePlus = true
+    shareLinkedIn = true
+    readingTime = true
+    readingTimeText = "Estimated reading time:"
     dateFormat = "Mon, Jan 2, 2006"
 
 [Permalinks]
