@@ -1,10 +1,9 @@
-baseurl = "https://mcollier.github.io"
+baseurl = "https://michaelscollier.com"
 title = "Michael S. Collier's Blog"
 theme = "ghostwriter"
 copyright = "Michael S. Collier"
 disqusShortname = "michaelscollier"
 languageCode = "en-us"
-publishDir = "docs"
 
 [Params]
     mainSections = ["post"]
