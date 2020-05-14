@@ -1,0 +1,21 @@
+baseurl = "https://mcollier.github.io"
+title = "Michael S. Collier's Blog"
+theme = "ghostwriter"
+copyright = "Michael S. Collier"
+disqusShortname = "michaelscollier"
+languageCode = "en-us"
+publishDir = "docs"
+
+[Params]
+    mainSections = ["post"]
+    intro = true
+    headline = "Michael S. Collier"
+    description = "Michael's personal blog. It's mine . . . all mine!"
+    github = "https://github.com/mcollier"
+    twitter = "https://twitter.com/michaelcollier"
+    opengraph = true
+    shareTwitter = true
+    dateFormat = "Mon, Jan 2, 2006"
+
+[Permalinks]
+    post = "/:filename/"
