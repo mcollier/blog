@@ -1,19 +1,20 @@
 ---
 layout: post
 title:  "Azure Functions with Private Endpoints"
-date:   2020-05-15 09:00:00 -0500
+date:   2020-05-15 02:00:00-0400
 categories: [azure-functions]
+author: "Michael S. Collier"
 description: Setting up Azure Functions to work with private endpoints.
-tags: [azure-functions, networking, virtual-network, azure-bastion, private-endpoints]
+tags: [azure-functions, cosmosdb, networking, virtual-network, azure-bastion, private-endpoints]
 draft: true
 comments: true
 ---
 
-As enterprises continue to adopt serverless (and Platform-as-a-Service, or PaaS) solutions, they often need a way to integrate with existing resources on a virtual network.  These existing resources could be databases, file storage, message queues or event streams, or REST APIs.  In doing so, those interactions need to take place within the virtual network.  Until relatively recently, combining serverless/PaaS offerings with traditional network access restrictions was complex, if not nearly impossible.  I feel the story is changing.  With the introduction of Azure Virtual Network service endpoints and private endpoints, it's becoming easier for enterprises to realize the benefits of serverless, while also complying with necessary virtual network access controls.
+As enterprises continue to adopt serverless (and Platform-as-a-Service, or PaaS) solutions, they often need a way to integrate with existing resources on a virtual network.  These existing resources could be databases, file storage, message queues or event streams, or REST APIs.  In doing so, those interactions need to take place within the virtual network.  Until relatively recently, combining serverless/PaaS offerings with traditional network access restrictions was complex, if not nearly impossible.  
 
-This post will detail how I am able to configure an Azure Function to work with Azure resources using [private endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview). By using private endpoints, I ensure that the resources are accessible only via my virtual network.  This gives me an additional level of network-based security and control.
+I feel the story is changing.  With the introduction of Azure Virtual Network service endpoints and private endpoints, it's becoming easier for enterprises to realize the benefits of serverless, while also complying with necessary virtual network access controls.
 
-By using private endpoints, the Azure Function app will communicate with designated resources using a resource-specific private IP address (e.g. 10.0.0/24 address space).  The example I'll show in this post uses private endpoints for Azure Storage and CosmosDB.
+This post will detail how I am able to configure an Azure Function to work with Azure resources using [private endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview). By using private endpoints, I ensure that the resources are accessible only via my virtual network.  The Azure Function app will communicate with designated resources using a resource-specific private IP address (e.g. 10.100.0/24 address space).  This gives me an additional level of network-based security and control.
 
 The sample shown in this post, and [accompanying GitHub repository](https://github.com/mcollier/azure-functions-private-storage), discusses the following key concepts necessary to use private endpoints with Azure Functions:
 
@@ -31,7 +32,7 @@ Additionally, the sample uses an Azure VM and Azure Bastion in order to access A
 
 The following diagram shows the high-level architecture of the solution to be created:
 
-![Architecture overview](/assets/azure-functions-with-private-endpoints/high-level-architecture.jpg)
+![Architecture overview](/images/azure-functions-private-endpoints/high-level-architecture.jpg)
 
 ## Deployment
 
@@ -46,7 +47,7 @@ In order to get started with this sample, you'll need an Azure subscription.  If
 
 I've created an Azure Resource Manager (ARM) template to provision all the necessary Azure resources. The template will also create the application settings needed by the Azure Function sample code.  The Azure CLI can be used to deploy the template:
 
-```bash
+{{< highlight shell >}}
 resourceGroupName="functions-private-endpoints"
 location="eastus"
 now=`date +%Y%m%d-%H%M%S`
@@ -57,7 +58,7 @@ az group create --name $resourceGroupName --location $location
 
 echo "Deploying main template . . ."
 az deployment group create -g $resourceGroupName --template-file azuredeploy.json --parameters azuredeploy.parameters.json --name $deploymentName
-```
+{{< / highlight >}}
 
 ### Deploy the code
 
@@ -69,14 +70,14 @@ func azure functionapp publish <function-app-name>
 
 ## Virtual Network
 
-One of the first components to set up is the virtual network.  Nearly all other Azure services in this samp;le are either provisioned into the virtual network, or integrated with, the virtual network.  After all, this sample is about using private endpoints, and private endpoints go along with a virtual network (can't have one without the other).
+One of the first components to set up is the virtual network.  Nearly all other Azure services in this sample are either provisioned into the virtual network, or integrated with, the virtual network.  After all, this sample is about using private endpoints, and private endpoints go along with a virtual network (can't have one without the other).
 
 The sample uses four subnets:
 
-- Subnet for Azure Function virtual network integration. This subnet is delegated to the function.
-- Subnet for private endpoints. Private IP addresses are allocated from this subnet.
-- Subnet for the virtual machine. The template creates a VM which is placed within this subnet.
-- Subnet for the [Azure Bastion host](https://docs.microsoft.com/azure/bastion/bastion-create-host-portal).
+1. Subnet for Azure Function virtual network integration. This subnet is delegated to the function.
+2. Subnet for private endpoints. Private IP addresses are allocated from this subnet.
+3. Subnet for the virtual machine. The template creates a VM which is placed within this subnet.
+4. Subnet for the [Azure Bastion host](https://docs.microsoft.com/azure/bastion/bastion-create-host-portal).
 
 ## Virtual Network (VNet) Integration
 
@@ -184,11 +185,8 @@ The sample will use three Azure storage related application settings:
 
 When using private endpoints for Azure Storage, it is necessary to create a private endpoint for each Azure Storage service (table, blob, queue, or file).  Therefore, this samples sets up 5 private endpoints related to Azure Storage.
 
-1. A private endpoint for the Azure Storage __queue__ referenced by the _AzureWebJobsStorage_ application setting.
-2. A private endpoint for the Azure Storage __blob__ storage referenced by the _AzureWebJobsStorage_ application setting.
-3. A private endpoint for the Azure Storage __table__ storage referenced by the _AzureWebJobsStorage_ application setting.
-4. A private endpoint for the Azure Storage __file__ storage referenced by the _AzureWebJobsStorage_ application setting.
-5. A private endpoint for __blob__ storage referenced by the _CensusResultsAzureStorageConnection_ application setting.  This is the only private endpoint related to the _CensusResultsAzureStorageConnection_ application setting.
+- Four private endpoints related to each of the services referenced by the _AzureWebJobsStorage_ application setting.
+- One private endpoint for __blob__ storage referenced by the _CensusResultsAzureStorageConnection_ application setting.  This is the only private endpoint related to the _CensusResultsAzureStorageConnection_ application setting.
 
 ## Azure Cosmos DB Private Endpoints
 
@@ -196,7 +194,7 @@ As mentioned previously, a CosmosDB output binding is used to save data to a Cos
 
 CosmosDB supports different API (Sql, Cassandra, Mongo, Table, etc.) types, and a private endpoint is needed for each.  Meaning, there is a private endpoint for the SQL protocol, and another private endpoint for the Mongo protocol, etc.  Since I'm using the Sql API type in this sample, it is only necessary to configure a private endpoint for the Sql API.
 
-For this sample, I set up everything with an ARM template.  It is important to note the value for the "groupIds" in the ARM template below is case sensitive.  In most cases, ARM templates are not case sensitive. In this case, since I'm using the Sql API, the value _must_ be "Sql".  If it is "sql", you'll receive an "InternalServerError" error that leaves you guessing as to what went wrong.  I learned this the hard way.
+For this sample, I set up everything with an ARM template.  It is important to note the value for the `groupIds` in the ARM template below is case sensitive.  In most cases, ARM templates are not case sensitive. In this case, since I'm using the Sql API, the value _must_ be "Sql".  If it is "sql", you'll receive an "InternalServerError" error that leaves you guessing as to what went wrong.  I learned this the hard way.
 
 > Don't be like Mike - use "Sql".  However, if you want to see this changes, so that both "Sql" and "sql" are valid, or that a descriptive error messages is returned, please [vote up the Azure Feedback](https://feedback.azure.com/forums/217313-networking/suggestions/40247743-private-endpoint-groupid-should-be-case-insensitiv) I've submitted.
 
@@ -237,14 +235,14 @@ When working with private endpoints, it is necessary to make changes your [DNS c
 
 Azure services have DNS configuration to know how to connect to other Azure services over a public endpoint.  However, when using a private endpoint, the connection isn't made over the public endpoint.  It's made using a private IP address allocated specifically for that Azure resource.  So, the default DNS configuration will need to be overridden.
 
-One of the nice things about working with private endpoints is that the connection string used by calling service doesn't need to change.  In other words, I can use `contoso.blob.core.windows.net` to connect to either the public endpoint or the private endpoint (for blob storage in the Contoso storage account).
+One of the nice things about working with private endpoints is that the connection string used by the calling service doesn't need to change.  In other words, I can use `contoso.blob.core.windows.net` to connect to either the public endpoint or the private endpoint (for blob storage in the Contoso storage account).
 
 This is made possible by using private DNS zones. The private endpoint creates an alias in a subdomain prefixed with "privatelink".  For example, blobs in an Azure Storage account may have a public DNS name of `contoso.blob.core.windows.net`.  A private DNS zone is created which corresponds to `contoso.privatelink.blob.core.windows.net`.  A DNS A record is created for each private IP address associated with the private endpoint.  Clients within the virtual network resolve the connection to the storage account as follows:
 
 | Name | Type | Value |
 |------|------|-------|
 | `contoso.blob.core.windows.net` | CNAME | `contoso.privatelink.blob.core.windows.net` |
-| `contoso.privatelink.blob.core.windows.net` | A | 10.100.1.0 |
+| `contoso.privatelink.blob.core.windows.net` | A | 10.100.1.6 |
 
 Clients external to the virtual network continue to resolve to the public IP address of the service.
 
@@ -252,13 +250,13 @@ Clients external to the virtual network continue to resolve to the public IP add
 
 This sample uses private endpoints for Azure Storage and CosmosDB.  As such, private DNS zones are needed for each Azure storage service, as well as the Sql API for CosmosDB.  Meaning, five DNS zones are needed to support this sample:
 
-- `privatelink.queue.core.windows.net`
-- `privatelink.blob.core.windows.net`
-- `privatelink.table.core.windows.net`
-- `privatelink.file.core.windows.net`
-- `privatelink.documents.azure.com`
+1. `privatelink.queue.core.windows.net`
+2. `privatelink.blob.core.windows.net`
+3. `privatelink.table.core.windows.net`
+4. `privatelink.file.core.windows.net`
+5. `privatelink.documents.azure.com`
 
-I used the recommended zone names as specified at [https://docs.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration](https://docs.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration)
+When creating the zones, I use [recommended zone names](https://docs.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration).
 
 ### Setting it up
 
