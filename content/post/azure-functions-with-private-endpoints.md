@@ -6,7 +6,7 @@ categories: [azure-functions]
 author: "Michael S. Collier"
 description: Setting up Azure Functions to work with private endpoints.
 tags: [azure-functions, cosmosdb, networking, virtual-network, azure-bastion, private-endpoints]
-draft: true
+draft: false
 comments: true
 ---
 
