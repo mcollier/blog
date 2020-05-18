@@ -175,7 +175,7 @@ The workaround being that it is possible to put virtual network restrictions on 
 
 The other (without network restrictions) storage account needs to be referenced via the [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) application setting.  It is this storage account that will contain an Azure File share used to persist the function's application code.
 
-> I expect the need to use two separate storage accounts, one with vnet restrictions and one without, will change relatively soon.  It was mentioned during the [April 2020 Azure Functions Live webcast](https://youtu.be/x2fTgWkbhLY?t=1490) that the team is working to remove this restrictions.  Once that is done, you'll be able to keep everything confined to the virtual network.
+> I expect the need to use two separate storage accounts, one with vnet restrictions and one without, will change relatively soon.  It was mentioned during the [April 2020 Azure Functions Live webcast](https://youtu.be/x2fTgWkbhLY?t=1490) that the team is working to remove this restriction.  Once that is done, you'll be able to keep everything confined to the virtual network.
 
 Furthermore, for this sample, a third storage account is used.  This third storage account is used by the sample application code - it's where the CSV blob file will be placed.  The Function blob trigger will pick up this file and the function will do work against it.  This storage account will also use a private endpoint.
 
@@ -235,7 +235,7 @@ For this sample, I set up everything with an ARM template.  It is important to n
 
 When working with private endpoints, it is necessary to make changes your [DNS configuration](https://docs.microsoft.com/azure/private-link/private-endpoint-overview#dns-configuration).  You can either use a host file on a VM within the virtual network, a [private DNS zone](https://docs.microsoft.com/azure/dns/private-dns-privatednszone), or your own DNS server hosted within the virtual network.  I decided to use private DNS zones (because I want to manage as little infrastructure as possible).
 
-> More information on Private Endpoint DNS configuration can be found at [https://docs.microsoft.com/azure/private-link/private-endpoint-dns#dns-configuration-scenarios](https://docs.microsoft.com/azure/private-link/private-endpoint-dns#dns-configuration-scenarios).
+> More information on Private Endpoint DNS configuration can be found in the [official documentation](https://docs.microsoft.com/azure/private-link/private-endpoint-dns#dns-configuration-scenarios).
 
 Azure services have DNS configuration to know how to connect to other Azure services over a public endpoint.  However, when using a private endpoint, the connection isn't made over the public endpoint.  It's made using a private IP address allocated specifically for that Azure resource.  So, the default DNS configuration will need to be overridden.
 
