@@ -14,6 +14,8 @@ As enterprises continue to adopt serverless (and Platform-as-a-Service, or PaaS)
 
 I feel the story is changing.  With the introduction of Azure Virtual Network service endpoints and private endpoints, it's becoming easier for enterprises to realize the benefits of serverless, while also complying with necessary virtual network access controls.
 
+> If you would like to learn more about virtual networking with Azure Functions, please check out my previous post where I show how to [restrict access to an Azure Function using private site access restrictions](https://michaelscollier.com/azure-functions-private-site-access/).  A slightly modified version is also now available in the [official Azure docs as a tutorial](https://docs.microsoft.com/azure/azure-functions/functions-create-private-site-access).
+
 This post will detail how I am able to configure an Azure Function to work with Azure resources using [private endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview). By using private endpoints, I ensure that the resources are accessible only via my virtual network.  The Azure Function app will communicate with designated resources using a resource-specific private IP address (e.g. 10.100.0/24 address space).  This gives me an additional level of network-based security and control.
 
 The sample shown in this post, and [accompanying GitHub repository](https://github.com/mcollier/azure-functions-private-storage), discusses the following key concepts necessary to use private endpoints with Azure Functions:
@@ -131,7 +133,7 @@ There are a few important details about the configuration of the function.
 
 #### Run from Package
 
-The function is configured to [run from a deployment package](https://docs.microsoft.com/azure/azure-functions/run-functions-from-deployment-package). As such, the package is persisted in an Azure File share referenced by the [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) application setting.
+The function is configured to [run from a deployment package](https://docs.microsoft.com/azure/azure-functions/run-functions-from-deployment-package). As such, the package is persisted in an Azure File share referenced by the [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) application setting.  Please review the [section below on Azure Storage Private Endpoints](#azure-storage-private-endpoints) for why this is important in this scenario.
 
 #### Virtual Network Triggers
 
@@ -172,6 +174,8 @@ Azure Functions requires an Azure Storage account for persisting runtime metadat
 The workaround being that it is possible to put virtual network restrictions on the Azure storage account referenced via the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) application setting. However, if that is done, then a separate storage account - _one without network restrictions_ - is needed.
 
 The other (without network restrictions) storage account needs to be referenced via the [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) application setting.  It is this storage account that will contain an Azure File share used to persist the function's application code.
+
+> I expect the need to use two separate storage accounts, one with vnet restrictions and one without, will change relatively soon.  It was mentioned during the [April 2020 Azure Functions Live webcast](https://youtu.be/x2fTgWkbhLY?t=1490) that the team is working to remove this restrictions.  Once that is done, you'll be able to keep everything confined to the virtual network.
 
 Furthermore, for this sample, a third storage account is used.  This third storage account is used by the sample application code - it's where the CSV blob file will be placed.  The Function blob trigger will pick up this file and the function will do work against it.  This storage account will also use a private endpoint.
 
